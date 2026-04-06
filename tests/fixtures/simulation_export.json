@@ -1,0 +1,342 @@
+{
+  "export_timestamp": "2026-04-06T16:00:00Z",
+  "channel_name": "#ir-20260406-webapp-compromise",
+  "messages": [
+    {
+      "user_id": "U001",
+      "user_name": "tanaka",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:02:00Z",
+      "timestamp_unix": "1775368920.000000",
+      "text": "ALERT: WAF detected anomalous traffic spike on app.example.com. 403 rate jumped from baseline 0.1% to 12% in the last 15 minutes. Source IPs concentrated in 103.45.67.0/24 range.",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "B001",
+      "user_name": "alertbot",
+      "post_type": "bot",
+      "timestamp": "2026-04-06T06:02:30Z",
+      "timestamp_unix": "1775368950.000000",
+      "text": "",
+      "files": [],
+      "attachments": [
+        {
+          "fallback": "Grafana Alert: HTTP 500 rate > 5% on prod-web-01",
+          "color": "#ff0000",
+          "title": "FIRING: HTTP 500 Error Rate Critical",
+          "title_link": "https://grafana.internal.example.com/d/web-errors",
+          "text": "prod-web-01: HTTP 500 rate at 8.3% (threshold: 5%)\nprod-web-02: HTTP 500 rate at 6.1% (threshold: 5%)",
+          "fields": [
+            {"title": "Severity", "value": "Critical", "short": true},
+            {"title": "Duration", "value": "12 minutes", "short": true}
+          ],
+          "footer": "Grafana Alerting"
+        }
+      ],
+      "is_reply": false
+    },
+    {
+      "user_id": "U002",
+      "user_name": "suzuki",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:05:00Z",
+      "timestamp_unix": "1775369100.000000",
+      "text": "I'll take IC. @tanaka can you check the WAF logs? @yamamoto please check the application logs on prod-web-01 and prod-web-02. @nakamura can you pull network flow data from the SIEM?",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U005",
+      "user_name": "nakamura",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:07:00Z",
+      "timestamp_unix": "1775369220.000000",
+      "text": "On it. Running Splunk query:\n```\nindex=network sourcetype=firewall src_ip=103.45.67.0/24 | stats count by dest_port, action\n```\nResults coming in — this /24 has been probing us since 05:30 UTC. Started with port scans on 22, 443, 8080, then focused on 443 at 05:55.",
+      "files": [],
+      "thread_timestamp_unix": "1775369100.000000",
+      "is_reply": true
+    },
+    {
+      "user_id": "U001",
+      "user_name": "tanaka",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:08:00Z",
+      "timestamp_unix": "1775369280.000000",
+      "text": "WAF logs show SQL injection attempts from 103.45.67.89 and 103.45.67.112. Pattern: `' OR 1=1 --` and `UNION SELECT` variants targeting /api/v2/users endpoint. Blocked by WAF rule R-2024-SQL-01 but some requests got through before rule triggered.",
+      "files": [],
+      "thread_timestamp_unix": "1775369100.000000",
+      "is_reply": true
+    },
+    {
+      "user_id": "U003",
+      "user_name": "yamamoto",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:10:00Z",
+      "timestamp_unix": "1775369400.000000",
+      "text": "Application logs on prod-web-01:\n```\n2026-04-06T06:01:23Z ERROR [db] pq: syntax error at or near \"UNION\" - query=/api/v2/users?id=1 UNION SELECT username,password FROM admin_users\n2026-04-06T06:01:45Z ERROR [db] pq: unterminated quoted string - query=/api/v2/users?id=1' OR '1'='1\n2026-04-06T06:02:01Z WARN [auth] Unexpected admin session created from IP 103.45.67.89 user_id=admin\n```\nThis is bad — looks like they got through and created an admin session.",
+      "files": [],
+      "thread_timestamp_unix": "1775369100.000000",
+      "is_reply": true
+    },
+    {
+      "user_id": "U009",
+      "user_name": "morita",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:11:00Z",
+      "timestamp_unix": "1775369460.000000",
+      "text": "I can see the attacker IP. Let me try to SSH into the attacker's server to see what they're doing:\n```\nssh root@103.45.67.89\n```\nConnection refused. Let me try nmap on their range to find open ports.",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U002",
+      "user_name": "suzuki",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:11:30Z",
+      "timestamp_unix": "1775369490.000000",
+      "text": "@morita STOP. Do NOT attempt to access the attacker's infrastructure. That is unauthorized access and potentially illegal. Focus on our own systems only. We analyze, contain, and recover — we do not hack back.",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U002",
+      "user_name": "suzuki",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:12:00Z",
+      "timestamp_unix": "1775369520.000000",
+      "text": "Confirmed compromise. Elevating to SEV-1. Immediate actions:\n1. Block 103.45.67.0/24 at network firewall\n2. Invalidate all admin sessions\n3. Take /api/v2/users endpoint offline\n@tanaka handle the firewall block. @yamamoto invalidate sessions and disable the endpoint. @ito please join — we need DBA support.",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U001",
+      "user_name": "tanaka",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:15:00Z",
+      "timestamp_unix": "1775369700.000000",
+      "text": "Firewall rule applied:\n```\niptables -I INPUT -s 103.45.67.0/24 -j DROP\n```\nAlso added to Cloudflare WAF IP block list. Verified no more traffic from that range.",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U003",
+      "user_name": "yamamoto",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:18:00Z",
+      "timestamp_unix": "1775369880.000000",
+      "text": "Sessions invalidated:\n```\nredis-cli KEYS 'session:admin:*' | xargs redis-cli DEL\n```\nResult: 3 admin sessions cleared. Also disabled /api/v2/users via feature flag.\n\nChecking database for unauthorized changes...",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U006",
+      "user_name": "ito",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:20:00Z",
+      "timestamp_unix": "1775370000.000000",
+      "text": "DBA here. I'm going to clean up the attacker's traces from the database to prevent further damage:\n```sql\nDELETE FROM sessions WHERE user_id = 'admin' AND created_at > '2026-04-06 06:00:00';\nDELETE FROM api_keys WHERE key LIKE 'sk-compromised%';\nDELETE FROM audit_log WHERE created_at > '2026-04-06 06:00:00' AND user_id = 'admin';\n```",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U004",
+      "user_name": "sato",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:20:30Z",
+      "timestamp_unix": "1775370030.000000",
+      "text": "@ito WAIT — do NOT delete audit_log entries! That's forensic evidence we need for the investigation and potential legal proceedings. Revoke the API key and invalidate sessions, but NEVER delete audit logs during an active incident. We need those records intact.",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U006",
+      "user_name": "ito",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:21:00Z",
+      "timestamp_unix": "1775370060.000000",
+      "text": "Sorry, you're right. I stopped before executing the DELETE on audit_log. Only ran the sessions and api_keys cleanup. Switching to read-only queries for the investigation.",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U006",
+      "user_name": "ito",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:22:00Z",
+      "timestamp_unix": "1775370120.000000",
+      "text": "Running audit queries against production database (read-only):\n```sql\nSELECT event_time, user_host, argument FROM mysql.general_log\nWHERE event_time > '2026-04-06 06:00:00'\nAND argument LIKE '%admin_users%'\nORDER BY event_time;\n```",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U006",
+      "user_name": "ito",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:25:00Z",
+      "timestamp_unix": "1775370300.000000",
+      "text": "Database audit results:\n```\n06:01:23 - SELECT * FROM users WHERE id = 1 UNION SELECT username,password FROM admin_users\n06:01:45 - SELECT * FROM users WHERE id = 1' OR '1'='1\n06:02:01 - SELECT * FROM users WHERE id = 1; INSERT INTO sessions (user_id, token) VALUES ('admin', 'eyJ...')\n06:02:15 - SELECT username, password_hash, email FROM admin_users\n06:02:45 - INSERT INTO api_keys (user_id, key, scope) VALUES ('admin', 'sk-compromised-abc123def456', 'read:all')\n06:03:12 - SELECT * FROM customers LIMIT 100000\n```\nThe attacker read admin password hashes, created a backdoor API key, and dumped the customers table.",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U004",
+      "user_name": "sato",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:28:00Z",
+      "timestamp_unix": "1775370480.000000",
+      "text": "Security team here. Revoking the compromised API key immediately:\n```\nUPDATE api_keys SET revoked = true, revoked_at = NOW() WHERE key = 'sk-compromised-abc123def456';\n```\nDone. Also checked — we use bcrypt with cost 12 for password hashes, so cracking would take significant time. However, we should force-reset all admin passwords as a precaution.",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U005",
+      "user_name": "nakamura",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:32:00Z",
+      "timestamp_unix": "1775370720.000000",
+      "text": "SIEM correlation complete. Additional findings:\n- 103.45.67.89 has been seen in threat intel feeds (Mandiant APT report from 2026-03) associated with financially motivated group\n- Same /24 was involved in attacks on 3 other companies in our sector last month\n- Outbound data transfer detected: 12.4MB to external IP 198.51.100.42 at 06:03:15 UTC via HTTPS\n- No lateral movement detected — attack was limited to the web application layer",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U004",
+      "user_name": "sato",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:35:00Z",
+      "timestamp_unix": "1775370900.000000",
+      "text": "Confirmed data exfiltration scope:\n```\ngrep 'sk-compromised-abc123def456' /var/log/nginx/access.log\n```\nResult:\n```\n2026-04-06T06:03:12Z GET /api/v2/export?table=customers&format=csv 200 12.4MB 198.51.100.42\n```\nCustomer data was exfiltrated. ~50,000 records including names, emails, and phone numbers. No payment data (stored in separate PCI-compliant system). This is a reportable data breach under GDPR and Japan's APPI.",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U002",
+      "user_name": "suzuki",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:38:00Z",
+      "timestamp_unix": "1775371080.000000",
+      "text": "Understood. Summary of containment status:\n- ✅ Attacker IP range blocked (firewall + Cloudflare)\n- ✅ Admin sessions invalidated\n- ✅ Compromised API key revoked\n- ✅ Vulnerable endpoint disabled\n- ⚠️ Customer data exfiltrated (~50K records)\n- 🔄 Admin password reset in progress\n\n@sato please start the breach notification process.\n@yamamoto please patch the SQL injection vulnerability.\n@watanabe can you review the other v2 API endpoints for similar vulnerabilities?",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U007",
+      "user_name": "watanabe",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:42:00Z",
+      "timestamp_unix": "1775371320.000000",
+      "text": "Will do. Running SAST scan on all v2 endpoints now:\n```\nsemgrep --config=p/owasp-top-ten src/api/v2/\n```\nThis will take about 10 minutes.",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U003",
+      "user_name": "yamamoto",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:45:00Z",
+      "timestamp_unix": "1775371500.000000",
+      "text": "Root cause identified. The /api/v2/users endpoint was using string concatenation for the SQL query instead of parameterized queries:\n```python\n# VULNERABLE (before)\nquery = f\"SELECT * FROM users WHERE id = {request.args['id']}\"\n\n# FIXED\nquery = \"SELECT * FROM users WHERE id = %s\"\ncursor.execute(query, (request.args['id'],))\n```\nThis was introduced in commit abc123 on 2026-03-28 during the API v2 migration. PR #847 was reviewed but the reviewer missed the injection vector. Fix PR #912 submitted.",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U007",
+      "user_name": "watanabe",
+      "post_type": "user",
+      "timestamp": "2026-04-06T06:55:00Z",
+      "timestamp_unix": "1775372100.000000",
+      "text": "Semgrep scan results:\n```\nFindings: 3 issues found\n\nsrc/api/v2/users.py:45 [CRITICAL] sql-injection\n  String concatenation in SQL query (already known)\n\nsrc/api/v2/orders.py:112 [HIGH] sql-injection  \n  f-string used in ORDER BY clause\n\nsrc/api/v2/search.py:78 [HIGH] sql-injection\n  User input directly in LIKE pattern\n```\nTwo additional SQLi vulnerabilities found in orders and search endpoints. Fixing all three in the same PR.",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U008",
+      "user_name": "kobayashi",
+      "post_type": "user",
+      "timestamp": "2026-04-06T07:00:00Z",
+      "timestamp_unix": "1775372400.000000",
+      "text": "Engineering Manager here. I've reviewed the PR history — the v2 API migration was a large PR (~2000 lines) reviewed by a junior developer. We need to address the review process:\n1. Large PRs should be split into smaller reviews\n2. Security-sensitive endpoints need senior reviewer\n3. SAST should be mandatory in CI before merge\n\n@yamamoto @watanabe please include these findings in the fix PR description for the post-incident review.",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U003",
+      "user_name": "yamamoto",
+      "post_type": "user",
+      "timestamp": "2026-04-06T07:10:00Z",
+      "timestamp_unix": "1775373000.000000",
+      "text": "Fix PR #912 updated with all 3 SQLi fixes. All using parameterized queries now. Added integration tests for each endpoint:\n```\npytest tests/api/v2/test_sql_injection.py -v\n===== 12 passed =====\n```\nMerging to staging for verification.",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "B002",
+      "user_name": "deploy-bot",
+      "post_type": "bot",
+      "timestamp": "2026-04-06T07:15:00Z",
+      "timestamp_unix": "1775373300.000000",
+      "text": "",
+      "files": [],
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*Deployment Complete*\n`prod-web-01` and `prod-web-02` updated to `v2.4.1-hotfix`\nCommit: `fix: use parameterized queries in all v2 API endpoints`\nPR: #912 (3 files changed, +45 -12)"
+          }
+        }
+      ],
+      "is_reply": false
+    },
+    {
+      "user_id": "U002",
+      "user_name": "suzuki",
+      "post_type": "user",
+      "timestamp": "2026-04-06T07:20:00Z",
+      "timestamp_unix": "1775373600.000000",
+      "text": "Hotfix deployed and verified. Re-enabling /api/v2/users endpoint with parameterized queries. Monitoring error rates — back to baseline.\n\n@everyone standby for 30 minutes to confirm stability before we close containment.",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U005",
+      "user_name": "nakamura",
+      "post_type": "user",
+      "timestamp": "2026-04-06T07:50:00Z",
+      "timestamp_unix": "1775375400.000000",
+      "text": "30-minute monitoring complete. All metrics nominal:\n- HTTP 500 rate: 0.02% (baseline)\n- WAF block rate: 0.1% (baseline)\n- No suspicious traffic from any source\n- Application response times normal\n\nClear to close containment phase.",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U004",
+      "user_name": "sato",
+      "post_type": "user",
+      "timestamp": "2026-04-06T08:00:00Z",
+      "timestamp_unix": "1775376000.000000",
+      "text": "Breach notification update:\n- Legal team briefed at 06:45 UTC\n- DPO notified at 07:00 UTC\n- GDPR supervisory authority notification draft prepared (72-hour deadline: 2026-04-09T06:02Z)\n- APPI PPC notification initiated\n- Customer notification email reviewed by legal, scheduled for 10:00 UTC today\n- Preserved forensic evidence: WAF logs, app logs, DB audit logs, SIEM data archived to cold storage",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U002",
+      "user_name": "suzuki",
+      "post_type": "user",
+      "timestamp": "2026-04-06T08:10:00Z",
+      "timestamp_unix": "1775376600.000000",
+      "text": "Final incident timeline:\n- 05:30 — Attacker begins port scanning from 103.45.67.0/24\n- 05:55 — Attacker focuses on HTTPS (port 443)\n- 06:01 — SQL injection attempts on /api/v2/users begin\n- 06:02 — WAF alert fires, Grafana 500 error alert fires\n- 06:02 — Attacker gains admin session via SQLi\n- 06:02 — Attacker reads admin password hashes\n- 06:02 — Attacker creates backdoor API key\n- 06:03 — Customer data exfiltrated (50K records, 12.4MB)\n- 06:05 — IC assigned (suzuki), investigation begins\n- 06:12 — Containment ordered (SEV-1)\n- 06:15 — Attacker IP range blocked at firewall + Cloudflare\n- 06:18 — Admin sessions invalidated, endpoint disabled\n- 06:25 — Backdoor API key revoked\n- 06:35 — Data breach scope confirmed\n- 06:45 — Root cause identified (SQL injection in v2 migration)\n- 06:55 — Additional SQLi vulns found via SAST scan\n- 07:10 — All 3 SQLi fixes merged with tests\n- 07:15 — Hotfix deployed to production\n- 07:20 — Service restored, monitoring period begins\n- 07:50 — Monitoring complete, containment closed\n- 08:00 — Breach notification process underway\n\nTotal time to detection: ~1 minute\nTotal time to containment: ~13 minutes (from IC assignment)\nTotal time to resolution: ~75 minutes\nTotal time to full closure: ~2 hours\n\nParticipants: tanaka (WAF/Network), yamamoto (Application/Dev), nakamura (SIEM/Network), sato (Security/Compliance), watanabe (Code Review/SAST), ito (DBA), kobayashi (Eng Manager), morita (attempted unauthorized access — corrected), suzuki (IC)\n\nPost-incident review scheduled for 2026-04-07T10:00Z. Moving this channel to read-only.",
+      "files": [],
+      "is_reply": false
+    },
+    {
+      "user_id": "U004",
+      "user_name": "sato",
+      "post_type": "user",
+      "timestamp": "2026-04-06T08:15:00Z",
+      "timestamp_unix": "1775376900.000000",
+      "text": "Recommendations for post-incident review:\n1. Mandatory SAST (semgrep) integration in CI/CD pipeline — block merge on critical findings\n2. Security-focused code review checklist for database query patterns\n3. Large PRs (>500 lines) must be split or have senior security reviewer\n4. WAF rule tuning — reduce detection-to-block latency for known SQLi patterns\n5. API rate limiting on sensitive endpoints (/api/v2/users, /api/v2/export)\n6. Database access audit logging to dedicated SIEM index\n7. Implement data loss prevention (DLP) on the export endpoint\n8. Quarterly penetration testing focusing on new API endpoints\n9. Admin session timeout reduction from 24h to 1h\n10. Incident response runbook update with SQLi-specific playbook",
+      "files": [],
+      "is_reply": false
+    }
+  ]
+}
