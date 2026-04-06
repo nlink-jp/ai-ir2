@@ -9,6 +9,7 @@ to neutralise any IoCs the LLM may have re-introduced.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from aiir2.models import (
     ActivityAnalysis,
@@ -39,6 +40,7 @@ def render_markdown(
     review: IncidentReview,
     tactics: list[Tactic],
     export_timestamp: str = "",
+    tz: str = "UTC",
 ) -> str:
     """Render a complete analysis report as Markdown.
 
@@ -51,11 +53,15 @@ def render_markdown(
         review: Process quality review.
         tactics: List of extracted investigation tactics.
         export_timestamp: Human-readable export timestamp.
+        tz: IANA timezone name for the "Generated" timestamp.
 
     Returns:
         Markdown-formatted report string with all IoCs defanged.
     """
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    zi = ZoneInfo(tz)
+    now_dt = datetime.now(timezone.utc).astimezone(zi)
+    tz_label = tz if tz == "UTC" else f"UTC{now_dt.strftime('%z')[:3]}:{now_dt.strftime('%z')[3:]} ({tz})"
+    now = now_dt.strftime(f"%Y-%m-%d %H:%M:%S {tz_label}")
     lines: list[str] = [
         "# Incident Analysis Report",
         "",

@@ -175,6 +175,39 @@ def test_render_markdown_contains_review():
     assert "Create runbook" in md
 
 
+def test_render_markdown_timezone_utc():
+    """Default UTC timezone produces 'UTC' label in Generated line."""
+    md = render_markdown(
+        incident_id="abc123",
+        channel="#inc-db",
+        summary=_make_summary(),
+        activity=_make_activity(),
+        roles=_make_roles(),
+        review=_make_review(),
+        tactics=_make_tactics(),
+        tz="UTC",
+    )
+    # Should contain a Generated line with UTC
+    assert "**Generated**:" in md
+    assert "UTC" in md
+
+
+def test_render_markdown_timezone_asia_tokyo():
+    """Asia/Tokyo timezone produces +09:00 offset in Generated line."""
+    md = render_markdown(
+        incident_id="abc123",
+        channel="#inc-db",
+        summary=_make_summary(),
+        activity=_make_activity(),
+        roles=_make_roles(),
+        review=_make_review(),
+        tactics=_make_tactics(),
+        tz="Asia/Tokyo",
+    )
+    assert "Asia/Tokyo" in md
+    assert "+09:00" in md
+
+
 def test_render_markdown_defangs_iocs():
     """IoCs embedded in narrative fields must be defanged."""
     summary = _make_summary()

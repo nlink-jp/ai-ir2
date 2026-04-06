@@ -162,3 +162,34 @@ def test_render_html_contains_data():
     assert "abc123" in html
     assert "#inc-db" in html
     assert "Database Outage in Production" in html
+
+
+def test_render_html_timezone_utc():
+    """Default UTC timezone produces 'UTC' in generated_at."""
+    html = render_html(
+        incident_id="abc123",
+        channel="#inc-db",
+        summary=_make_summary(),
+        activity=_make_activity(),
+        roles=_make_roles(),
+        review=_make_review(),
+        tactics=_make_tactics(),
+        tz="UTC",
+    )
+    assert "UTC" in html
+
+
+def test_render_html_timezone_asia_tokyo():
+    """Asia/Tokyo timezone produces +09:00 offset in output."""
+    html = render_html(
+        incident_id="abc123",
+        channel="#inc-db",
+        summary=_make_summary(),
+        activity=_make_activity(),
+        roles=_make_roles(),
+        review=_make_review(),
+        tactics=_make_tactics(),
+        tz="Asia/Tokyo",
+    )
+    assert "Asia/Tokyo" in html
+    assert "+09:00" in html

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from pydantic import Field
+from zoneinfo import ZoneInfo
+
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -19,8 +21,25 @@ class GeminiConfig(BaseSettings):
     project: str = Field(default="", description="GCP project ID")
     location: str = Field(default="us-central1", description="Vertex AI location")
     model: str = Field(default="gemini-2.5-flash", description="Gemini model name")
+    timezone: str = Field(
+        default="UTC",
+        description="Timezone for report timestamps (e.g. Asia/Tokyo, UTC)",
+    )
 
     model_config = {"env_prefix": "AIIR2_", "env_file": ".env", "extra": "ignore"}
+
+    @field_validator("timezone")
+    @classmethod
+    def _validate_timezone(cls, v: str) -> str:
+        """Ensure the timezone string is a valid IANA timezone name."""
+        try:
+            ZoneInfo(v)
+        except (KeyError, Exception) as exc:
+            raise ValueError(
+                f"Invalid timezone: {v!r}. Use IANA timezone names "
+                f"(e.g. 'UTC', 'Asia/Tokyo', 'America/New_York')."
+            ) from exc
+        return v
 
 
 def get_gemini_config(**overrides: str) -> GeminiConfig:

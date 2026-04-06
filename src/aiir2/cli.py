@@ -20,6 +20,7 @@ def main() -> None:
 @click.option("--project", default="", help="GCP project ID (overrides AIIR2_PROJECT)")
 @click.option("--location", default="", help="Vertex AI location (overrides AIIR2_LOCATION)")
 @click.option("--model", default="", help="Gemini model name (overrides AIIR2_MODEL)")
+@click.option("--timezone", default="", help="Timezone for report timestamps (e.g. Asia/Tokyo, overrides AIIR2_TIMEZONE)")
 def analyze(
     input_file: str,
     output_dir: str,
@@ -27,6 +28,7 @@ def analyze(
     project: str,
     location: str,
     model: str,
+    timezone: str,
 ) -> None:
     """Analyze an incident response Slack export.
 
@@ -44,7 +46,7 @@ def analyze(
 
     err = Console(stderr=True)
     try:
-        config = get_gemini_config(project=project, location=location, model=model)
+        config = get_gemini_config(project=project, location=location, model=model, timezone=timezone)
     except ValueError as e:
         raise click.ClickException(str(e))
 
@@ -76,6 +78,7 @@ def config_show() -> None:
     click.echo(f"Project:  {config.project or '(not set)'}")
     click.echo(f"Location: {config.location}")
     click.echo(f"Model:    {config.model}")
+    click.echo(f"Timezone: {config.timezone}")
     # Check ADC
     try:
         import google.auth

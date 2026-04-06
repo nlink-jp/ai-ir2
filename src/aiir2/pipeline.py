@@ -211,6 +211,7 @@ def run_pipeline(
         review=review,
         tactics=tactics,
         export_timestamp=export_ts,
+        tz=config.timezone,
     )
     (base / "en" / "report.md").write_text(md_en, encoding="utf-8")
 
@@ -224,6 +225,7 @@ def run_pipeline(
         tactics=tactics,
         export_timestamp=export_ts,
         lang="en",
+        tz=config.timezone,
     )
     (base / "en" / "report.html").write_text(html_en, encoding="utf-8")
 
@@ -265,6 +267,7 @@ def run_pipeline(
             review=tr_review_model,
             tactics=tr_tactics,
             export_timestamp=export_ts,
+            tz=config.timezone,
         )
         (base / lang / "report.md").write_text(md_tr, encoding="utf-8")
 
@@ -278,6 +281,7 @@ def run_pipeline(
             tactics=tr_tactics,
             export_timestamp=export_ts,
             lang=lang,
+            tz=config.timezone,
         )
         (base / lang / "report.html").write_text(html_tr, encoding="utf-8")
 
