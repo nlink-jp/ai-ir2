@@ -310,6 +310,37 @@ tr:hover td { background: #f8fafc; }
   color: var(--color-text-muted);
 }
 
+/* Activity unified table */
+.activity-table { table-layout: fixed; }
+.activity-table th:nth-child(1) { width: 160px; }
+.activity-table th:nth-child(2) { width: 150px; }
+.activity-table th:nth-child(3) { width: 25%; }
+.activity-table th:nth-child(4) { width: 25%; }
+.activity-table th:nth-child(5) { width: auto; }
+.activity-participant-cell {
+  vertical-align: top;
+  border-right: 2px solid var(--color-accent);
+  background: var(--color-bg);
+}
+.participant-header-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.participant-avatar-sm {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
 /* ===== Role cards ===== */
 .role-card {
   background: var(--color-surface);
@@ -646,43 +677,59 @@ details pre {
 <section id="pane-activity" class="tab-pane" role="tabpanel">
 
   {% if activity.participants %}
-  {% for p in activity.participants %}
   <div class="card">
-    <div class="participant-header">
-      <div class="participant-avatar">{{ p.user_name[0]|upper }}</div>
-      <div>
-        <div class="participant-name">{{ p.user_name|at }}</div>
-        <div class="participant-role">{{ p.role_hint }}</div>
-      </div>
-    </div>
-    {% if p.actions %}
     <div class="table-wrap">
-      <table>
+      <table class="activity-table">
         <thead>
           <tr>
-            <th style="width:140px;">Time</th>
+            <th style="width:160px;">Participant</th>
+            <th style="width:150px;">Time</th>
             <th>Purpose</th>
             <th>Method</th>
             <th>Findings</th>
           </tr>
         </thead>
         <tbody>
+          {% for p in activity.participants %}
+          {% if p.actions %}
           {% for a in p.actions %}
           <tr>
+            {% if loop.first %}
+            <td rowspan="{{ p.actions|length }}" class="activity-participant-cell">
+              <div class="participant-header-inline">
+                <div class="participant-avatar-sm">{{ p.user_name[0]|upper }}</div>
+                <div>
+                  <div style="font-weight:600;">{{ p.user_name|at }}</div>
+                  <div class="text-muted text-sm">{{ p.role_hint }}</div>
+                </div>
+              </div>
+            </td>
+            {% endif %}
             <td class="font-mono text-muted" style="font-size:0.78rem; white-space:nowrap;">{{ a.timestamp }}</td>
             <td>{{ a.purpose }}</td>
-            <td><code class="tool-pill">{{ a.method }}</code></td>
+            <td><code style="font-size:0.82rem; color:var(--color-text); background:var(--color-bg); padding:0.15rem 0.4rem; border-radius:3px;">{{ a.method }}</code></td>
             <td class="text-muted">{{ a.findings }}</td>
           </tr>
+          {% endfor %}
+          {% else %}
+          <tr>
+            <td class="activity-participant-cell">
+              <div class="participant-header-inline">
+                <div class="participant-avatar-sm">{{ p.user_name[0]|upper }}</div>
+                <div>
+                  <div style="font-weight:600;">{{ p.user_name|at }}</div>
+                  <div class="text-muted text-sm">{{ p.role_hint }}</div>
+                </div>
+              </div>
+            </td>
+            <td colspan="4" class="text-muted text-sm">No actions recorded.</td>
+          </tr>
+          {% endif %}
           {% endfor %}
         </tbody>
       </table>
     </div>
-    {% else %}
-    <p class="text-muted text-sm">No actions recorded.</p>
-    {% endif %}
   </div>
-  {% endfor %}
   {% else %}
   <div class="card">
     <p class="text-muted">No participant activity data available.</p>
