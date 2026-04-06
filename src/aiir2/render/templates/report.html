@@ -598,6 +598,21 @@ details pre {
   </div>
   {% endif %}
 
+  <div class="grid-2">
+    {% if summary.root_cause %}
+    <div class="card">
+      <h2 class="section-title">Root Cause</h2>
+      <p>{{ summary.root_cause }}</p>
+    </div>
+    {% endif %}
+    {% if summary.resolution %}
+    <div class="card">
+      <h2 class="section-title">Resolution</h2>
+      <p>{{ summary.resolution }}</p>
+    </div>
+    {% endif %}
+  </div>
+
   {% if summary.timeline %}
   <div class="card">
     <h2 class="section-title">Timeline</h2>
@@ -623,21 +638,6 @@ details pre {
     </div>
   </div>
   {% endif %}
-
-  <div class="grid-2">
-    {% if summary.root_cause %}
-    <div class="card">
-      <h2 class="section-title">Root Cause</h2>
-      <p>{{ summary.root_cause }}</p>
-    </div>
-    {% endif %}
-    {% if summary.resolution %}
-    <div class="card">
-      <h2 class="section-title">Resolution</h2>
-      <p>{{ summary.resolution }}</p>
-    </div>
-    {% endif %}
-  </div>
 
 </section>
 
