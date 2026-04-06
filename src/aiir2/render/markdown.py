@@ -25,6 +25,11 @@ def _escape_cell(text: str) -> str:
     return text.replace("|", "\\|").replace("\n", "<br>")
 
 
+def _at(name: str) -> str:
+    """Prefix *name* with ``@``, avoiding ``@@`` if it already starts with one."""
+    return name if name.startswith("@") else f"@{name}"
+
+
 def render_markdown(
     incident_id: str,
     channel: str,
@@ -112,7 +117,7 @@ def render_markdown(
     lines.append("")
 
     for participant in activity.participants:
-        lines.append(f"### @{participant.user_name} \u2014 {participant.role_hint}")
+        lines.append(f"### {_at(participant.user_name)} \u2014 {participant.role_hint}")
         lines.append("")
 
         if participant.actions:
@@ -142,7 +147,7 @@ def render_markdown(
         for p in roles.participants:
             evidence_str = "; ".join(p.evidence) if p.evidence else ""
             lines.append(
-                f"| @{p.user_name}"
+                f"| {_at(p.user_name)}"
                 f" | {p.inferred_role}"
                 f" | {p.confidence}"
                 f" | {_escape_cell(evidence_str)} |"
@@ -156,9 +161,9 @@ def render_markdown(
         lines.append("|------|-------------|----|-------------|")
         for rel in roles.relationships:
             lines.append(
-                f"| @{rel.from_user}"
+                f"| {_at(rel.from_user)}"
                 f" | {rel.relationship_type}"
-                f" | @{rel.to_user or ''}"
+                f" | {_at(rel.to_user) if rel.to_user else ''}"
                 f" | {_escape_cell(rel.description)} |"
             )
         lines.append("")

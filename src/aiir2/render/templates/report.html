@@ -102,7 +102,7 @@ pre { background: var(--tbl-stripe); padding: 0.75rem; border-radius: 4px; overf
 <section id="tab-activity" class="tab-content" role="tabpanel">
   <h2>Participant Activities</h2>
   {% for p in activity.participants %}
-  <h3>@{{ p.user_name }} — {{ p.role_hint }}</h3>
+  <h3>{{ p.user_name|at }} — {{ p.role_hint }}</h3>
   {% if p.actions %}
   <table><thead><tr><th>Time</th><th>Purpose</th><th>Method</th><th>Findings</th></tr></thead><tbody>
   {% for a in p.actions %}
@@ -121,7 +121,7 @@ pre { background: var(--tbl-stripe); padding: 0.75rem; border-radius: 4px; overf
   <table><thead><tr><th>Participant</th><th>Role</th><th>Confidence</th><th>Evidence</th></tr></thead><tbody>
   {% for p in roles.participants %}
     <tr>
-      <td>@{{ p.user_name }}</td><td>{{ p.inferred_role }}</td>
+      <td>{{ p.user_name|at }}</td><td>{{ p.inferred_role }}</td>
       <td><span class="badge badge-{{ p.confidence }}">{{ p.confidence }}</span></td>
       <td>{{ p.evidence|join("; ") }}</td>
     </tr>
@@ -132,7 +132,7 @@ pre { background: var(--tbl-stripe); padding: 0.75rem; border-radius: 4px; overf
   <h3>Relationships</h3>
   <table><thead><tr><th>From</th><th>Relationship</th><th>To</th><th>Description</th></tr></thead><tbody>
   {% for r in roles.relationships %}
-    <tr><td>@{{ r.from_user }}</td><td>{{ r.relationship_type }}</td><td>@{{ r.to_user or "" }}</td><td>{{ r.description }}</td></tr>
+    <tr><td>{{ r.from_user|at }}</td><td>{{ r.relationship_type }}</td><td>{{ (r.to_user or "")|at }}</td><td>{{ r.description }}</td></tr>
   {% endfor %}
   </tbody></table>
   {% endif %}

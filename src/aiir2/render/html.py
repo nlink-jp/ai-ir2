@@ -54,6 +54,7 @@ def render_html(
         loader=FileSystemLoader(str(_TEMPLATE_DIR)),
         autoescape=True,
     )
+    env.filters["at"] = lambda name: name if name.startswith("@") else f"@{name}"
     template = env.get_template("report.html")
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     return template.render(
