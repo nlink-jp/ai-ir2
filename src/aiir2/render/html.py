@@ -63,6 +63,7 @@ def render_html(
     now_dt = datetime.now(timezone.utc).astimezone(zi)
     tz_label = tz if tz == "UTC" else f"UTC{now_dt.strftime('%z')[:3]}:{now_dt.strftime('%z')[3:]} ({tz})"
     now = now_dt.strftime(f"%Y-%m-%d %H:%M:%S {tz_label}")
+    export_ts_display = _format_ts_in_tz(export_timestamp, zi, tz)
     return template.render(
         incident_id=incident_id,
         channel=channel,
@@ -71,7 +72,19 @@ def render_html(
         roles=roles,
         review=review,
         tactics=tactics,
-        export_timestamp=export_timestamp,
+        export_timestamp=export_ts_display,
         lang=lang,
         generated_at=now,
     )
+
+
+def _format_ts_in_tz(iso_str: str, zi: ZoneInfo, tz_name: str) -> str:
+    """Convert an ISO timestamp string to the configured timezone for display."""
+    if not iso_str:
+        return ""
+    try:
+        dt = datetime.fromisoformat(iso_str).astimezone(zi)
+        tz_label = tz_name if tz_name == "UTC" else f"UTC{dt.strftime('%z')[:3]}:{dt.strftime('%z')[3:]} ({tz_name})"
+        return dt.strftime(f"%Y-%m-%d %H:%M:%S {tz_label}")
+    except (ValueError, TypeError):
+        return iso_str
