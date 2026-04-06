@@ -113,6 +113,16 @@ The LLM is instructed as an "expert incident response analyst" and told to:
 | `resolution` | string | How the incident was resolved |
 | `summary` | string | Narrative summary paragraph |
 
+#### Severity Criteria
+
+| Level | Criteria | Examples |
+|-------|----------|----------|
+| critical | Business-continuity impact. Data breach, full service outage, ransomware infection, etc. | 50k customer records exfiltrated, all production servers down |
+| high | Partial impact on major services. Rapid response required but overall business continues | Specific API failure, unauthorized access to internal systems |
+| medium | Limited impact. Services are running but degraded or partially impaired | Performance degradation, non-production environment affected |
+| low | Minimal impact. Should be monitored but no immediate action required | Reconnaissance activity detected, single isolated alert |
+| unknown | Insufficient information in the conversation to determine impact | Early investigation stage, details not yet confirmed |
+
 #### Evaluation Criteria
 
 A good summary accurately reflects the conversation without fabricating events. Timeline entries should correspond to actual messages. The severity should match the impact described. Root cause and resolution should be stated only if the conversation provides evidence for them.
@@ -170,9 +180,11 @@ The LLM is instructed as an "expert in organizational behavior and incident resp
 
 **Confidence calibration rules** are a key aspect of this prompt. The LLM is given explicit instructions to prevent a common failure mode where it rates observers as "high" confidence simply because it is certain about their role:
 
-- **high:** Active contributor with clearly evident role (led investigation, made decisions, performed analysis)
-- **medium:** Participated meaningfully but role is not fully clear, OR role is clear but contribution was limited
-- **low:** Minimal or no active contribution (joined but did not post, only reacted, posted a single trivial message). Observers and passive participants must always be rated "low" regardless of certainty about their role.
+| Level | Criteria | Examples |
+|-------|----------|----------|
+| high | Active contributor with clearly evident role (led investigation, made decisions, performed analysis) | "Checked logs and identified RCA", "Directed containment and assigned work to the team" |
+| medium | Participated meaningfully but role is not fully clear, OR role is clear but contribution was limited | "Answered a few questions but did not lead", "Provided DB expertise once" |
+| low | Minimal or no active contribution (joined but did not post, only reacted, posted a single trivial message). Observers and passive participants must always be rated "low" regardless of certainty about their role | "Joined the channel but never posted", "Only posted 'ack'" |
 
 **Relationship types:**
 
@@ -252,12 +264,24 @@ The prompt includes specific instructions for interpreting tactic confidence lev
 | `checklist[].item` | string | Action item description |
 | `checklist[].priority` | string | "high", "medium", or "low" |
 
-#### Scoring Criteria
+#### Overall Score Criteria
 
-- **excellent:** Textbook response with clear roles, fast communication, appropriate tools, and minimal gaps
-- **good:** Solid response with minor areas for improvement
-- **adequate:** Response achieved resolution but with notable process deficiencies
-- **poor:** Significant process failures that hindered the response
+| Score | Criteria | Examples |
+|-------|----------|----------|
+| excellent | Exemplary response. Clear role assignment, fast communication, appropriate tool selection, no gaps | Detection in 2 min, containment in 10 min, all participants fulfilled their roles effectively |
+| good | Solid response. Minor areas for improvement but overall effective | Response was fast but some notifications were delayed, minor process deviations |
+| adequate | Resolution achieved but with notable process deficiencies | Role confusion, communication delays, inappropriate tool usage observed in places |
+| poor | Significant process failures that hindered the response | No IC present, evidence destroyed, unauthorized access attempts, prolonged response gaps |
+
+#### Phase Quality Criteria
+
+| Score | Criteria |
+|-------|----------|
+| excellent | The phase followed best practices and was completed quickly and effectively |
+| good | Completed effectively but with some room for improvement |
+| adequate | Completed but with clear delays or deficiencies |
+| poor | Significant issues; the phase was incomplete or severely delayed |
+| unknown | Insufficient information in the conversation to assess this phase's quality |
 
 #### Evaluation Criteria
 
@@ -357,9 +381,11 @@ Each tactic must include:
 
 #### Confidence Classification
 
-- **confirmed:** Command output or an explicit result (log lines, screenshots, tool output) was shared in the channel. The tactic was demonstrably executed and its outcome is visible.
-- **inferred:** A participant stated they ran or checked something, but no output was shared (e.g., "I checked the logs and found X"). The tactic was likely executed but evidence is indirect.
-- **suggested:** Proposed as a recommendation or next step; no indication it was actually executed. The tactic represents a potential approach, not a proven one.
+| Level | Criteria | Examples |
+|-------|----------|----------|
+| confirmed | Command output or an explicit result (log lines, screenshots, tool output) was shared in the channel. The tactic was demonstrably executed and its outcome is visible. | Output of `` `kubectl get pods` `` was pasted, log lines shared in a code block |
+| inferred | A participant stated they ran or checked something, but no output was shared. The tactic was likely executed but evidence is indirect. | "I checked the logs and found X" (no output), "Updated the firewall rule" (result not shared) |
+| suggested | Proposed as a recommendation or next step; no indication it was actually executed. The tactic represents a potential approach, not a proven one. | "Next step should be to take a memory dump", "We could analyze with Volatility" |
 
 ### Stage 7: Translation
 
