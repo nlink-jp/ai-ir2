@@ -173,17 +173,23 @@ def run_pipeline(
 
     err.print(f"[bold]Incident ID: {incident_id}[/bold]")
 
-    # 4. Sequential analysis
-    err.print("[dim]Step 1/6: Summarizing incident...[/dim]")
-    summary = summarize_incident(processed, client)
+    # 4. Parallel analysis (summary, activity, roles, tactics are independent)
+    from concurrent.futures import ThreadPoolExecutor, as_completed
 
-    err.print("[dim]Step 2/6: Analyzing participant activities...[/dim]")
-    activity = analyze_activity(processed, client)
+    err.print("[dim]Step 1/2: Running parallel analysis (summary + activity + roles + tactics)...[/dim]")
 
-    err.print("[dim]Step 3/6: Inferring roles...[/dim]")
-    roles = analyze_roles(processed, client)
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        future_summary = pool.submit(summarize_incident, processed, client)
+        future_activity = pool.submit(analyze_activity, processed, client)
+        future_roles = pool.submit(analyze_roles, processed, client)
+        future_tactics = pool.submit(extract_tactics, processed, client)
 
-    # 5. Build report dict for reviewer
+        summary = future_summary.result()
+        activity = future_activity.result()
+        roles = future_roles.result()
+        tactics = future_tactics.result()
+
+    # 5. Review depends on summary + activity + roles
     report_data = {
         "incident_id": incident_id,
         "metadata": {"channel": processed.channel_name},
@@ -192,15 +198,11 @@ def run_pipeline(
         "roles": roles.model_dump(),
     }
 
-    err.print("[dim]Step 4/6: Reviewing process quality...[/dim]")
+    err.print("[dim]Step 2/2: Reviewing process quality...[/dim]")
     review = review_incident(report_data, client)
 
-    # 6. Extract tactics
-    err.print("[dim]Step 5/6: Extracting investigation tactics...[/dim]")
-    tactics = extract_tactics(processed, client)
-
-    # 7. Render English
-    err.print("[dim]Step 6/6: Rendering reports...[/dim]")
+    # 6. Render
+    err.print("[dim]Rendering reports...[/dim]")
 
     md_en = render_markdown(
         incident_id=incident_id,
