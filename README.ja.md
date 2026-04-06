@@ -53,8 +53,9 @@ aiir2 analyze incident.json --lang ja
 | `AIIR2_PROJECT` | （必須） | GCP プロジェクト ID |
 | `AIIR2_LOCATION` | `us-central1` | Vertex AI ロケーション |
 | `AIIR2_MODEL` | `gemini-2.5-flash` | Gemini モデル名 |
+| `AIIR2_TIMEZONE` | `UTC` | レポートのタイムスタンプに使用するタイムゾーン（IANA 名、例: `Asia/Tokyo`） |
 
-CLI フラグ `--project`、`--location`、`--model` は環境変数より優先されます。
+CLI フラグ `--project`、`--location`、`--model`、`--timezone` は環境変数より優先されます。
 
 ## コマンド
 
@@ -62,6 +63,7 @@ CLI フラグ `--project`、`--location`、`--model` は環境変数より優先
 aiir2 analyze <input.json>          # 全分析パイプライン
 aiir2 analyze <input.json> --lang ja --lang zh  # 翻訳付き
 aiir2 analyze <input.json> -o ./out  # カスタム出力ディレクトリ
+aiir2 analyze <input.json> --timezone Asia/Tokyo  # タイムスタンプのタイムゾーン指定
 aiir2 config show                    # 現在の設定を表示
 ```
 

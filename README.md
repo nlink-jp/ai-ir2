@@ -54,8 +54,9 @@ aiir2 analyze incident.json --lang ja
 | `AIIR2_PROJECT` | (required) | GCP project ID |
 | `AIIR2_LOCATION` | `us-central1` | Vertex AI location |
 | `AIIR2_MODEL` | `gemini-2.5-flash` | Gemini model name |
+| `AIIR2_TIMEZONE` | `UTC` | Timezone for report timestamps (IANA name, e.g. `Asia/Tokyo`) |
 
-CLI flags `--project`, `--location`, `--model` override environment variables.
+CLI flags `--project`, `--location`, `--model`, `--timezone` override environment variables.
 
 ## Commands
 
@@ -63,6 +64,7 @@ CLI flags `--project`, `--location`, `--model` override environment variables.
 aiir2 analyze <input.json>          # Full analysis pipeline
 aiir2 analyze <input.json> --lang ja --lang zh  # With translation
 aiir2 analyze <input.json> -o ./out  # Custom output directory
+aiir2 analyze <input.json> --timezone Asia/Tokyo  # Timezone for timestamps
 aiir2 config show                    # Display current configuration
 ```
 
