@@ -552,7 +552,7 @@ details pre {
         <h1>{{ summary.title }}</h1>
         <div class="header-meta">
           {% set sev = (summary.severity or "unknown")|lower %}
-          <span class="severity-badge severity-badge-{{ sev }}">{{ summary.severity or "Unknown" }}</span>
+          <span class="severity-badge severity-badge-{{ sev|lower }}">{{ summary.severity or "Unknown" }}</span>
           <span class="header-meta-item"><code>#{{ channel }}</code></span>
           <span class="header-meta-item">ID: <code>{{ incident_id }}</code></span>
           {% if export_timestamp %}
@@ -698,7 +698,7 @@ details pre {
     <div class="role-card">
       <div class="role-card-header">
         <span class="role-name">{{ p.user_name|at }}</span>
-        <span class="badge badge-{{ p.confidence }}">{{ p.confidence }}</span>
+        <span class="badge badge-{{ p.confidence|lower }}">{{ p.confidence }}</span>
       </div>
       <div class="role-title">{{ p.inferred_role }}</div>
       {% if p.evidence %}
@@ -782,7 +782,7 @@ details pre {
           <tr>
             <td style="font-weight:500; text-transform:capitalize;">{{ ph.phase }}</td>
             <td class="font-mono text-muted" style="font-size:0.8rem;">{{ ph.estimated_duration }}</td>
-            <td><span class="badge badge-{{ ph.quality }}">{{ ph.quality }}</span></td>
+            <td><span class="badge badge-{{ ph.quality|lower }}">{{ ph.quality }}</span></td>
             <td class="text-muted">{{ ph.notes }}</td>
           </tr>
           {% endfor %}
@@ -891,7 +891,7 @@ details pre {
     <label class="checklist-item">
       <input type="checkbox">
       <span>{{ c.item }}</span>
-      <span class="badge badge-{{ c.priority }}" style="margin-left:auto; flex-shrink:0;">{{ c.priority }}</span>
+      <span class="badge badge-{{ c.priority|lower }}" style="margin-left:auto; flex-shrink:0;">{{ c.priority }}</span>
     </label>
     {% endfor %}
   </div>
@@ -909,7 +909,7 @@ details pre {
       <div class="tactic-title">{{ t.title }}</div>
       <div class="tactic-badges">
         <span class="badge-category">{{ t.category }}</span>
-        <span class="badge badge-{{ t.confidence }}">{{ t.confidence }}</span>
+        <span class="badge badge-{{ t.confidence|lower }}">{{ t.confidence }}</span>
       </div>
     </div>
 
