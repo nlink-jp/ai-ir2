@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -33,6 +34,7 @@ def render_html(
     tactics: list[Tactic],
     export_timestamp: str = "",
     lang: str = "en",
+    tz: str = "UTC",
 ) -> str:
     """Render a complete analysis report as self-contained HTML.
 
@@ -46,6 +48,7 @@ def render_html(
         tactics: List of extracted investigation tactics.
         export_timestamp: Human-readable export timestamp.
         lang: BCP-47 language code for the ``<html lang>`` attribute.
+        tz: IANA timezone name for the "Generated" timestamp.
 
     Returns:
         Self-contained HTML string with no external resource dependencies.
@@ -56,7 +59,10 @@ def render_html(
     )
     env.filters["at"] = lambda name: name if name.startswith("@") else f"@{name}"
     template = env.get_template("report.html")
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    zi = ZoneInfo(tz)
+    now_dt = datetime.now(timezone.utc).astimezone(zi)
+    tz_label = tz if tz == "UTC" else f"UTC{now_dt.strftime('%z')[:3]}:{now_dt.strftime('%z')[3:]} ({tz})"
+    now = now_dt.strftime(f"%Y-%m-%d %H:%M:%S {tz_label}")
     return template.render(
         incident_id=incident_id,
         channel=channel,
