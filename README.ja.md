@@ -67,6 +67,7 @@ aiir2 config show                    # 現在の設定を表示
 
 ## ドキュメント
 
+- [Analysis Methodology](docs/en/analysis-methodology.md) / [分析手法](docs/ja/analysis-methodology.md)
 - [Data Format](docs/en/data-format.md) / [データフォーマット](docs/ja/data-format.md)
 
 ## ライセンス
