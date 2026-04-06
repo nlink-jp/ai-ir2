@@ -35,7 +35,31 @@ def analyze(
 
     INPUT_FILE is a scat/stail/scli JSON export file.
     """
-    click.echo("analyze command: not yet implemented")
+    from pathlib import Path
+
+    from rich.console import Console
+
+    from aiir2.config import get_gemini_config
+    from aiir2.pipeline import run_pipeline
+
+    err = Console(stderr=True)
+    try:
+        config = get_gemini_config(project=project, location=location, model=model)
+    except ValueError as e:
+        raise click.ClickException(str(e))
+
+    result = run_pipeline(
+        input_path=Path(input_file),
+        output_dir=output_dir,
+        langs=list(lang),
+        config=config,
+    )
+
+    err.print("\n[bold green]Analysis complete![/bold green]")
+    err.print(f"  Output: {result.output_dir}/")
+    err.print(f"  Languages: {', '.join(result.languages)}")
+    err.print(f"  Tactics: {result.tactic_count}")
+    err.print(f"  Messages: {result.message_count}")
 
 
 @main.group()
@@ -46,4 +70,17 @@ def config() -> None:
 @config.command("show")
 def config_show() -> None:
     """Display current configuration."""
-    click.echo("config show: not yet implemented")
+    from aiir2.config import GeminiConfig
+
+    config = GeminiConfig()
+    click.echo(f"Project:  {config.project or '(not set)'}")
+    click.echo(f"Location: {config.location}")
+    click.echo(f"Model:    {config.model}")
+    # Check ADC
+    try:
+        import google.auth
+
+        creds, _ = google.auth.default()
+        click.echo(f"ADC:      configured ({type(creds).__name__})")
+    except Exception:
+        click.echo("ADC:      not configured (run: gcloud auth application-default login)")
