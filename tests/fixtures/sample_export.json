@@ -1,0 +1,39 @@
+{
+  "export_timestamp": "2026-03-19T10:00:00Z",
+  "channel_name": "#incident-response",
+  "messages": [
+    {
+      "user_id": "U12345ABC",
+      "user_name": "alice",
+      "post_type": "user",
+      "timestamp": "2026-03-19T09:55:00Z",
+      "timestamp_unix": "1742378100.000000",
+      "text": "Server at 192.168.1.100 is down. Check http://internal.corp/logs for details.",
+      "files": [],
+      "thread_timestamp_unix": "",
+      "is_reply": false
+    },
+    {
+      "user_id": "U67890DEF",
+      "user_name": "bob",
+      "post_type": "user",
+      "timestamp": "2026-03-19T09:56:00Z",
+      "timestamp_unix": "1742378160.000000",
+      "text": "Running: kubectl get pods -n production | grep Error",
+      "files": [],
+      "thread_timestamp_unix": "",
+      "is_reply": false
+    },
+    {
+      "user_id": "U11111GHI",
+      "user_name": "carol",
+      "post_type": "user",
+      "timestamp": "2026-03-19T09:57:00Z",
+      "timestamp_unix": "1742378220.000000",
+      "text": "Found error hash: a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+      "files": [],
+      "thread_timestamp_unix": "",
+      "is_reply": false
+    }
+  ]
+}
