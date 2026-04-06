@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Incident Analysis Report — {{ channel }}</title>
+<style>
+:root {
+  --bg: #f8f9fa; --fg: #212529; --muted: #6c757d;
+  --border: #dee2e6; --accent: #0d6efd; --accent-light: #e7f1ff;
+  --tbl-stripe: #f2f4f6; --badge-high: #dc3545; --badge-med: #fd7e14;
+  --badge-low: #198754; --badge-info: #0dcaf0; --tab-bg: #fff;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.6; }
+.container { max-width: 1100px; margin: 0 auto; padding: 1rem; }
+header { background: var(--fg); color: #fff; padding: 1.5rem 0; }
+header .container { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; }
+header h1 { margin: 0; font-size: 1.4rem; }
+header .meta { font-size: 0.85rem; color: #adb5bd; }
+header .meta span { margin-left: 1rem; }
+nav.tabs { display: flex; gap: 2px; background: var(--border); border-radius: 6px 6px 0 0; overflow-x: auto; margin-top: 1rem; }
+nav.tabs button { flex: 1; min-width: 100px; padding: 0.6rem 1rem; border: none; background: var(--tbl-stripe); cursor: pointer; font-size: 0.9rem; white-space: nowrap; }
+nav.tabs button.active { background: var(--tab-bg); font-weight: 600; border-bottom: 2px solid var(--accent); }
+.tab-content { display: none; background: var(--tab-bg); border: 1px solid var(--border); border-top: none; padding: 1.5rem; border-radius: 0 0 6px 6px; }
+.tab-content.active { display: block; }
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+th, td { text-align: left; padding: 0.5rem 0.75rem; border: 1px solid var(--border); }
+th { background: var(--accent-light); font-weight: 600; }
+tr:nth-child(even) td { background: var(--tbl-stripe); }
+h2 { color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 0.3rem; margin-top: 1.5rem; }
+h3 { margin-top: 1.2rem; }
+.badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600; color: #fff; }
+.badge-critical, .badge-high { background: var(--badge-high); }
+.badge-medium { background: var(--badge-med); }
+.badge-low { background: var(--badge-low); }
+.badge-info, .badge-unknown { background: var(--badge-info); color: var(--fg); }
+.badge-excellent, .badge-good { background: var(--badge-low); }
+.badge-adequate { background: var(--badge-med); }
+.badge-poor { background: var(--badge-high); }
+.badge-confirmed { background: var(--badge-low); }
+.badge-inferred { background: var(--badge-med); }
+.badge-suggested { background: var(--badge-info); color: var(--fg); }
+ul.checklist { list-style: none; padding-left: 0; }
+ul.checklist li::before { content: "\2610\0020"; }
+pre { background: var(--tbl-stripe); padding: 0.75rem; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; font-size: 0.85rem; }
+@media (max-width: 700px) { nav.tabs button { font-size: 0.78rem; padding: 0.5rem; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <h1>Incident Analysis Report</h1>
+    <div class="meta">
+      <span>{{ channel }}</span>
+      <span>ID: {{ incident_id }}</span>
+      <span>{{ generated_at }}</span>
+      {% if export_timestamp %}<span>Export: {{ export_timestamp }}</span>{% endif %}
+    </div>
+  </div>
+</header>
+
+<div class="container">
+<nav class="tabs" role="tablist">
+  <button class="active" data-tab="summary" role="tab">Summary</button>
+  <button data-tab="activity" role="tab">Activity</button>
+  <button data-tab="roles" role="tab">Roles</button>
+  <button data-tab="review" role="tab">Review</button>
+  <button data-tab="tactics" role="tab">Tactics</button>
+</nav>
+
+<!-- Summary -->
+<section id="tab-summary" class="tab-content active" role="tabpanel">
+  <h2>{{ summary.title }}</h2>
+  <p><strong>Severity</strong>:
+    {% set sev = (summary.severity or "unknown")|lower %}
+    <span class="badge badge-{{ sev }}">{{ summary.severity or "Unknown" }}</span>
+  </p>
+  {% if summary.affected_systems %}
+  <p><strong>Affected Systems</strong>: {{ summary.affected_systems|join(", ") }}</p>
+  {% endif %}
+  {% if summary.summary %}<p>{{ summary.summary }}</p>{% endif %}
+
+  {% if summary.timeline %}
+  <h3>Timeline</h3>
+  <table><thead><tr><th>Time</th><th>Actor</th><th>Event</th></tr></thead><tbody>
+  {% for e in summary.timeline %}
+    <tr><td>{{ e.timestamp }}</td><td>{{ e.actor }}</td><td>{{ e.event }}</td></tr>
+  {% endfor %}
+  </tbody></table>
+  {% endif %}
+
+  {% if summary.root_cause %}
+  <h3>Root Cause</h3><p>{{ summary.root_cause }}</p>
+  {% endif %}
+  {% if summary.resolution %}
+  <h3>Resolution</h3><p>{{ summary.resolution }}</p>
+  {% endif %}
+</section>
+
+<!-- Activity -->
+<section id="tab-activity" class="tab-content" role="tabpanel">
+  <h2>Participant Activities</h2>
+  {% for p in activity.participants %}
+  <h3>@{{ p.user_name }} — {{ p.role_hint }}</h3>
+  {% if p.actions %}
+  <table><thead><tr><th>Time</th><th>Purpose</th><th>Method</th><th>Findings</th></tr></thead><tbody>
+  {% for a in p.actions %}
+    <tr><td>{{ a.timestamp }}</td><td>{{ a.purpose }}</td><td>{{ a.method }}</td><td>{{ a.findings }}</td></tr>
+  {% endfor %}
+  </tbody></table>
+  {% endif %}
+  {% endfor %}
+</section>
+
+<!-- Roles -->
+<section id="tab-roles" class="tab-content" role="tabpanel">
+  <h2>Roles and Relationships</h2>
+  {% if roles.participants %}
+  <h3>Participants</h3>
+  <table><thead><tr><th>Participant</th><th>Role</th><th>Confidence</th><th>Evidence</th></tr></thead><tbody>
+  {% for p in roles.participants %}
+    <tr>
+      <td>@{{ p.user_name }}</td><td>{{ p.inferred_role }}</td>
+      <td><span class="badge badge-{{ p.confidence }}">{{ p.confidence }}</span></td>
+      <td>{{ p.evidence|join("; ") }}</td>
+    </tr>
+  {% endfor %}
+  </tbody></table>
+  {% endif %}
+  {% if roles.relationships %}
+  <h3>Relationships</h3>
+  <table><thead><tr><th>From</th><th>Relationship</th><th>To</th><th>Description</th></tr></thead><tbody>
+  {% for r in roles.relationships %}
+    <tr><td>@{{ r.from_user }}</td><td>{{ r.relationship_type }}</td><td>@{{ r.to_user or "" }}</td><td>{{ r.description }}</td></tr>
+  {% endfor %}
+  </tbody></table>
+  {% endif %}
+</section>
+
+<!-- Review -->
+<section id="tab-review" class="tab-content" role="tabpanel">
+  <h2>Process Review</h2>
+  {% if review.overall_score %}
+  <p><strong>Overall Score</strong>:
+    <span class="badge badge-{{ review.overall_score|lower }}">{{ review.overall_score }}</span>
+  </p>
+  {% endif %}
+
+  {% if review.phases %}
+  <h3>Response Phases</h3>
+  <table><thead><tr><th>Phase</th><th>Duration</th><th>Quality</th><th>Notes</th></tr></thead><tbody>
+  {% for ph in review.phases %}
+    <tr><td>{{ ph.phase }}</td><td>{{ ph.estimated_duration }}</td>
+    <td><span class="badge badge-{{ ph.quality }}">{{ ph.quality }}</span></td>
+    <td>{{ ph.notes }}</td></tr>
+  {% endfor %}
+  </tbody></table>
+  {% endif %}
+
+  {% if review.communication.overall %}
+  <h3>Communication</h3><p>{{ review.communication.overall }}</p>
+  {% endif %}
+
+  {% if review.strengths %}
+  <h3>Strengths</h3><ul>{% for s in review.strengths %}<li>{{ s }}</li>{% endfor %}</ul>
+  {% endif %}
+  {% if review.improvements %}
+  <h3>Areas for Improvement</h3><ul>{% for i in review.improvements %}<li>{{ i }}</li>{% endfor %}</ul>
+  {% endif %}
+  {% if review.checklist %}
+  <h3>Action Items</h3>
+  <ul class="checklist">{% for c in review.checklist %}<li>{{ c.item }} ({{ c.priority }})</li>{% endfor %}</ul>
+  {% endif %}
+</section>
+
+<!-- Tactics -->
+<section id="tab-tactics" class="tab-content" role="tabpanel">
+  <h2>Investigation Tactics</h2>
+  {% for t in tactics %}
+  <article>
+    <h3>{{ t.title }}</h3>
+    <p>
+      <strong>Category</strong>: {{ t.category }} |
+      <strong>Confidence</strong>: <span class="badge badge-{{ t.confidence }}">{{ t.confidence }}</span>
+      {% if t.tools %} | <strong>Tools</strong>: {{ t.tools|join(", ") }}{% endif %}
+    </p>
+    <p><strong>Purpose</strong>: {{ t.purpose }}</p>
+    <h4>Procedure</h4><pre>{{ t.procedure }}</pre>
+    <h4>Observations</h4><pre>{{ t.observations }}</pre>
+    {% if t.tags %}<p><strong>Tags</strong>: {{ t.tags|join(", ") }}</p>{% endif %}
+  </article>
+  {% endfor %}
+</section>
+</div>
+
+<script>
+document.querySelectorAll("nav.tabs button").forEach(function(btn){
+  btn.addEventListener("click",function(){
+    document.querySelectorAll("nav.tabs button").forEach(function(b){b.classList.remove("active")});
+    document.querySelectorAll(".tab-content").forEach(function(tc){tc.classList.remove("active")});
+    btn.classList.add("active");
+    document.getElementById("tab-"+btn.getAttribute("data-tab")).classList.add("active");
+  });
+});
+</script>
+</body>
+</html>
