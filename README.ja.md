@@ -48,14 +48,35 @@ aiir2 analyze incident.json --lang ja
 
 ## 設定
 
+### 設定ファイル
+
+`ai-ir2` は `~/.config/ai-ir2/config.toml` の TOML 設定ファイルをサポートしています。
+
+```bash
+# セットアップ
+mkdir -p ~/.config/ai-ir2
+cp config.example.toml ~/.config/ai-ir2/config.toml
+# 設定を編集
+```
+
+### 優先順位
+
+設定は以下の優先順位で解決されます（上位が優先）:
+
+1. CLI フラグ (`--project`, `--location`, `--model`, `--timezone`)
+2. 環境変数 (`AIIR2_PROJECT` など)
+3. `.env` ファイル
+4. 設定ファイル (`~/.config/ai-ir2/config.toml`)
+5. デフォルト値
+
+### 環境変数
+
 | 環境変数 | デフォルト | 説明 |
 |---------|-----------|------|
 | `AIIR2_PROJECT` | （必須） | GCP プロジェクト ID |
 | `AIIR2_LOCATION` | `us-central1` | Vertex AI ロケーション |
 | `AIIR2_MODEL` | `gemini-2.5-flash` | Gemini モデル名 |
 | `AIIR2_TIMEZONE` | `UTC` | レポートのタイムスタンプに使用するタイムゾーン（IANA 名、例: `Asia/Tokyo`） |
-
-CLI フラグ `--project`、`--location`、`--model`、`--timezone` は環境変数より優先されます。
 
 ## コマンド
 

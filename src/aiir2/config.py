@@ -2,17 +2,43 @@
 
 from __future__ import annotations
 
+import tomllib
+from pathlib import Path
+from typing import Any
 from zoneinfo import ZoneInfo
 
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, PydanticBaseSettingsSource
+
+
+def _load_toml(tool_name: str) -> dict[str, Any]:
+    """Load TOML config from ~/.config/<tool_name>/config.toml if it exists."""
+    path = Path.home() / ".config" / tool_name / "config.toml"
+    if not path.is_file():
+        return {}
+    with path.open("rb") as f:
+        data = tomllib.load(f)
+    flat: dict[str, Any] = {}
+    if "gcp" in data and isinstance(data["gcp"], dict):
+        if "project" in data["gcp"]:
+            flat["project"] = data["gcp"]["project"]
+        if "location" in data["gcp"]:
+            flat["location"] = data["gcp"]["location"]
+    if "model" in data and isinstance(data["model"], dict):
+        model_section = data["model"]
+        if "name" in model_section:
+            flat["model"] = model_section["name"]
+        for k, v in model_section.items():
+            if k != "name":
+                flat[k] = v
+    for k, v in data.items():
+        if k not in ("gcp", "model") and not isinstance(v, dict):
+            flat[k] = v
+    return flat
 
 
 class GeminiConfig(BaseSettings):
-    """Vertex AI Gemini configuration loaded from environment variables.
-
-    All settings use the ``AIIR2_`` prefix and can be overridden via a
-    ``.env`` file in the working directory.
+    """Vertex AI Gemini configuration loaded from config file and environment variables.
 
     Authentication uses Application Default Credentials (ADC).
     Run ``gcloud auth application-default login`` to set up credentials.
@@ -27,6 +53,22 @@ class GeminiConfig(BaseSettings):
     )
 
     model_config = {"env_prefix": "AIIR2_", "env_file": ".env", "extra": "ignore"}
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        """Priority: init (CLI flags) > env vars > .env > config.toml > defaults."""
+        from pydantic_settings import InitSettingsSource
+
+        toml_data = _load_toml("ai-ir2")
+        toml_source = InitSettingsSource(settings_cls, init_kwargs=toml_data)
+        return (init_settings, env_settings, dotenv_settings, toml_source, file_secret_settings)
 
     @field_validator("timezone")
     @classmethod
@@ -56,7 +98,6 @@ def get_gemini_config(**overrides: str) -> GeminiConfig:
     Raises:
         ValueError: If project is not configured.
     """
-    # Filter out empty overrides so env vars take precedence.
     filtered = {k: v for k, v in overrides.items() if v}
     config = GeminiConfig(**filtered)
     if not config.project:

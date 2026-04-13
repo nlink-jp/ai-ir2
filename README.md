@@ -49,14 +49,35 @@ aiir2 analyze incident.json --lang ja
 
 ## Configuration
 
+### Config file
+
+`ai-ir2` supports a TOML config file at `~/.config/ai-ir2/config.toml`.
+
+```bash
+# Setup
+mkdir -p ~/.config/ai-ir2
+cp config.example.toml ~/.config/ai-ir2/config.toml
+# Edit with your settings
+```
+
+### Priority
+
+Configuration is resolved in the following order (highest wins):
+
+1. CLI flags (`--project`, `--location`, `--model`, `--timezone`)
+2. Environment variables (`AIIR2_PROJECT`, etc.)
+3. `.env` file
+4. Config file (`~/.config/ai-ir2/config.toml`)
+5. Defaults
+
+### Environment variables
+
 | Environment Variable | Default | Description |
 |---------------------|---------|-------------|
 | `AIIR2_PROJECT` | (required) | GCP project ID |
 | `AIIR2_LOCATION` | `us-central1` | Vertex AI location |
 | `AIIR2_MODEL` | `gemini-2.5-flash` | Gemini model name |
 | `AIIR2_TIMEZONE` | `UTC` | Timezone for report timestamps (IANA name, e.g. `Asia/Tokyo`) |
-
-CLI flags `--project`, `--location`, `--model`, `--timezone` override environment variables.
 
 ## Commands
 

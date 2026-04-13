@@ -1,0 +1,8 @@
+[gcp]
+project  = "your-project-id"
+location = "us-central1"
+
+[model]
+name = "gemini-2.5-flash"
+
+# timezone = "UTC"
